@@ -8,6 +8,7 @@ dependencies = [
     "matplotlib>=3.10.9",
     "monai>=1.5.2",
     "pandas>=3.0.2",
+    "safetensors>=0.7.0",
 ]
 
 [dependency-groups]
