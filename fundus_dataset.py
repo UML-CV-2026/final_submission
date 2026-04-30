@@ -64,3 +64,12 @@ class AugmentPair:
             mask = TF.vflip(mask)
 
         return image, mask
+
+class CenterCropPair:
+    def __init__(self, crop_size):
+        self.crop_size = crop_size  # (height, width)
+
+    def __call__(self, image, mask):
+        image = TF.center_crop(image, self.crop_size)
+        mask = TF.center_crop(mask, self.crop_size)
+        return image, mask
