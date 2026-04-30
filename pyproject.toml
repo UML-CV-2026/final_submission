@@ -5,10 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "gudhi>=3.12.0",
+    "jupyter-bokeh>=4.0.5",
     "matplotlib>=3.10.9",
     "monai==1.5.2",
     "pandas>=3.0.2",
+    "panel>=1.8.10",
     "pip>=26.1",
+    "pot>=0.9.6.post1",
     "safetensors>=0.7.0",
     "scikit-image>=0.26.0",
     "scipy>=1.17.1",
