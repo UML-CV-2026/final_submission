@@ -4,7 +4,7 @@ import torch
 import torchvision.transforms.functional as TF
 from torch.utils.data import Dataset
 from torchvision import transforms
-from torchvision.io import ImageReadMode, decode_image
+from torchvision.io import ImageReadMode, read_image
 
 _IMG_EXTS = {".png", ".jpg", ".jpeg"}
 
@@ -34,8 +34,8 @@ class FundusVesselDataset(Dataset):
         img_path = os.path.join(self.img_dir, self.images[idx])
         mask_path = os.path.join(self.mask_dir, self.masks[idx])
 
-        image = decode_image(img_path, mode=ImageReadMode.RGB).float() / 255.0
-        mask = decode_image(mask_path, mode=ImageReadMode.GRAY).float() / 255.0
+        image = read_image(img_path, mode=ImageReadMode.RGB).float() / 255.0
+        mask = read_image(mask_path, mode=ImageReadMode.GRAY).float() / 255.0
 
         mask = (mask > 0.5).float()
 
