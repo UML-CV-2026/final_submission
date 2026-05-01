@@ -25,7 +25,14 @@ class FundusVesselDataset(Dataset):
         self.images = _list_raster_images(img_dir)
         self.masks = _list_raster_images(mask_dir)
 
-        assert len(self.images) == len(self.masks)
+        assert len(self.images) == len(self.masks), (
+            f"Found {len(self.images)} images and {len(self.masks)} masks"
+        )
+
+        print("Number of images:", len(self.images))
+        print("Number of masks:", len(self.masks))
+        print("First 5 image files: ", self.images[:5])
+        print("First 5 mask files: ", self.masks[:5])
 
     def __len__(self):
         return len(self.images)
@@ -39,17 +46,26 @@ class FundusVesselDataset(Dataset):
 
         mask = (mask > 0.5).float()
 
-        if self.transform:
-            image, mask = self.transform(image, mask)
-
+        if self.transform: image, mask = self.transform(image, mask)
         return image, mask
 
 
 class AugmentPair:
-    def __init__(self, crop_size=(256, 256)):
+    def __init__(self, crop_size=(512, 512)):
         self.crop_size = crop_size
 
     def __call__(self, image, mask):
+
+        _, image_h, image_w = image.shape
+        crop_h, crop_w = self.crop_size
+
+        # Sanity check
+        if image_h < crop_h or image_w < crop_w:
+            raise ValueError(
+                f"Image size ({image_h}x{image_w}) is smaller than crop size ({crop_h}x{crop_w})"
+            )
+
+        # Get random crop parameters
         i, j, h, w = transforms.RandomCrop.get_params(image, self.crop_size)
 
         image = TF.crop(image, i, j, h, w)
