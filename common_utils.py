@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from torch.utils.data import DataLoader, Subset
 from fundus_dataset import FundusVesselDataset, AugmentPair
 from monai.networks.nets import UNet
@@ -45,10 +46,42 @@ def hard_dice_score(logits, masks, threshold=0.5, eps=1e-6):
 
     return dice.mean()
 
+def hard_cldice_score(logits, masks, threshold=0.5, eps=1e-6):
+    del eps  # kept for API parity with hard_dice_score
+    from cldice import clDice
+
+    probs = torch.sigmoid(logits)
+    preds = (probs > threshold)
+    masks = (masks > 0.5)
+
+    # [B, 1, H, W] -> [B, H, W]
+    preds = preds.squeeze(1)
+    masks = masks.squeeze(1)
+
+    cldice_scores = []
+    for pred_i, mask_i in zip(preds, masks):
+        pred_np = pred_i.detach().cpu().numpy().astype(np.bool_)
+        mask_np = mask_i.detach().cpu().numpy().astype(np.bool_)
+
+        if not pred_np.any() and not mask_np.any():
+            score = 1.0
+        else:
+            score = float(clDice(pred_np, mask_np))
+            if not np.isfinite(score):
+                score = 0.0
+
+        cldice_scores.append(score)
+
+    if len(cldice_scores) == 0:
+        return torch.tensor(0.0, device=logits.device)
+
+    return torch.tensor(sum(cldice_scores) / len(cldice_scores), device=logits.device)
+
 def validate_full_image(model, loader, loss_fn, threshold=0.5, device=torch.device("cuda")):
     model.eval()
     val_loss = 0.0
     val_dice = 0.0
+    val_cldice = 0.0
 
     with torch.no_grad():
         for images, masks in loader:
@@ -58,13 +91,16 @@ def validate_full_image(model, loader, loss_fn, threshold=0.5, device=torch.devi
             logits = model(images)
             loss = loss_fn(logits, masks)
             dice = hard_dice_score(logits, masks, threshold=threshold)
+            cldice = hard_cldice_score(logits, masks, threshold=threshold)
 
             val_loss += loss.item() * images.size(0)
             val_dice += dice.item() * images.size(0)
+            val_cldice += cldice.item() * images.size(0)
 
     val_loss /= len(loader.dataset)
     val_dice /= len(loader.dataset)
-    return val_loss, val_dice
+    val_cldice /= len(loader.dataset)
+    return val_loss, val_dice, val_cldice
 
 
 def train_model(model, train_loader, val_loader, loss_fn, optimizer, epochs, save_path=None, save_name="baseline.safetensors", device=torch.device("cuda")):
@@ -96,7 +132,7 @@ def train_model(model, train_loader, val_loader, loss_fn, optimizer, epochs, sav
         train_loss /= len(train_loader.dataset)
 
         # Default validation protocol: full-image metrics on val_loader.
-        val_loss, val_dice = validate_full_image(
+        val_loss, val_dice, val_cldice = validate_full_image(
             model=model,
             loader=val_loader,
             loss_fn=loss_fn,
@@ -109,6 +145,7 @@ def train_model(model, train_loader, val_loader, loss_fn, optimizer, epochs, sav
             "train_loss_steps": train_loss_steps,
             "val_loss": val_loss,
             "val_dice": val_dice,
+            "val_cldice": val_cldice,
         })
 
         if val_dice > best_val_dice:
@@ -126,6 +163,7 @@ def train_model(model, train_loader, val_loader, loss_fn, optimizer, epochs, sav
             f"Train loss: {train_loss:.4f} | "
             f"Val loss: {val_loss:.4f} | "
             f"Val Dice: {val_dice:.4f} | "
+            f"Val clDice: {val_cldice:.4f} | "
             f"Best: {best_val_dice:.4f} @ {best_epoch}"
         )
 

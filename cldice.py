@@ -16,7 +16,10 @@ def cl_score(v, s):
     Returns:
         [float]: [computed skeleton volume intersection]
     """
-    return np.sum(v*s)/np.sum(s)
+    denom = np.sum(s)
+    if denom == 0:
+        return 0.0
+    return np.sum(v * s) / denom
 
 
 def clDice(v_p, v_l):
@@ -40,4 +43,7 @@ def clDice(v_p, v_l):
             )
         tprec = cl_score(v_p,skeletonize_3d(v_l))
         tsens = cl_score(v_l,skeletonize_3d(v_p))
-    return 2*tprec*tsens/(tprec+tsens)
+    denom = tprec + tsens
+    if denom == 0:
+        return 0.0
+    return 2 * tprec * tsens / denom
