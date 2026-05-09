@@ -26,3 +26,5 @@ And then run
 `uv sync`
 
 After this, the notebooks in evals/ should be plug and play in terms of running the experiments. Make sure the run the cells in order or something will break.
+
+If the demo doesn't work, we've saved the results of the the demo within the evals notebooks for your convenience.
