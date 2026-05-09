@@ -7,6 +7,11 @@ https://huggingface.co/yu-alvin/Computer-Vision-2026
 
 However, our code in evals/ will automatically download the weights for you. 
 
+## Citations
+Some code was derived from these repositories:
+https://github.com/jocpae/clDice
+https://github.com/PengchengShi1220/cbDice
+
 ## Demos
 Our demos are located in the evals folder where you can evaluate our pretrained models on the FIVES dataset.
 
