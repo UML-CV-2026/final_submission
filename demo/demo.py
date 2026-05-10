@@ -22,17 +22,18 @@ MODEL_SPECS = (
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-def make_unet():
-    return UNet(spatial_dims=2, in_channels=3, out_channels=1, channels=(32, 64, 128, 256, 512), strides=(2, 2, 2, 2), num_res_units=2)
-
-
 @st.cache_resource
 def load_models():
     repo_path = snapshot_download(repo_id=REPO_ID, allow_patterns=[path for _, path in MODEL_SPECS])
     models = []
 
     for name, filename in MODEL_SPECS:
-        model = make_unet().to(device)
+        model = UNet(spatial_dims=2, 
+                    in_channels=3, 
+                    out_channels=1, 
+                    channels=(32, 64, 128, 256, 512), 
+                    strides=(2, 2, 2, 2), 
+                    num_res_units=2).to(device)
         state = load_file(os.path.join(repo_path, filename))
         model.load_state_dict(state)
         model.eval()
@@ -49,12 +50,10 @@ def load_mask(file):
     mask = TF.pil_to_tensor(mask).float() / 255.0
     return (mask > 0.5).float()
 
-
 def dice_score(pred, mask):
     return (2 * (pred * mask).sum()) / (pred.sum() + mask.sum() + 1e-8)
 
-
-st.set_page_config(layout="wide")
+st.set_page_config(layout="centered")
 st.title("Retinal Vessel Segmentation")
 
 models = load_models()
@@ -71,10 +70,22 @@ if image_file and mask_file:
 
     st.subheader("Input")
 
-    input_cols = st.columns([0.35, 1, 0.3], gap="small")
+    input_cols = st.columns(2, gap="small")
 
-    with input_cols[0]: st.image(image.permute(1, 2, 0).cpu().numpy(), caption="Retinal image", width=320)
-    with input_cols[1]: st.image(mask[0].cpu().numpy(), caption="Ground-truth mask", clamp=True, width=320)
+    with input_cols[0]:
+        st.image(
+            image.permute(1, 2, 0).cpu().numpy(),
+            caption="Retinal image",
+            width=300,
+        )
+
+    with input_cols[1]:
+        st.image(
+            mask[0].cpu().numpy(),
+            caption="Ground-truth mask",
+            clamp=True,
+            width=300,
+        )
 
     st.subheader("Predictions")
     preds = []
@@ -89,9 +100,10 @@ if image_file and mask_file:
     cols = st.columns(3)
 
     for row_start in range(0, len(preds), 3):
-        cols = st.columns([1, 1, 1, 2.5], gap="small")
+        cols = st.columns(3, gap="medium")
 
         for col, (name, pred, dice) in zip(cols, preds[row_start:row_start + 3]):
             with col:
-                st.image(pred, clamp=True, width=280)
-                st.markdown(f"**{name}**\nDice: {dice:.4f}")
+                st.image(pred, clamp=True, width=220)
+                st.markdown(f"**{name}**")
+                st.write(f"Dice: {dice:.4f}")
