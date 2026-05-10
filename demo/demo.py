@@ -54,8 +54,6 @@ def load_mask(file):
     mask = TF.pil_to_tensor(mask).float() / 255.0
     return (mask > 0.5).float()
 
-
-
 st.set_page_config(layout="centered")
 st.title("Retinal Vessel Segmentation")
 
@@ -67,14 +65,13 @@ mask_file = st.file_uploader("Upload ground-truth mask", type=["png", "jpg", "jp
 if image_file and mask_file:
     image = load_image(image_file)
     mask = load_mask(mask_file)
-
     x = image.unsqueeze(0).to(device)
     y = mask.unsqueeze(0).to(device)
 
     st.subheader("Input")
-
     input_cols = st.columns(2, gap="small")
 
+    # Display the input image and ground-truth mask
     with input_cols[0]:
         st.image(image.permute(1, 2, 0).cpu().numpy(), caption="Retinal image", width=300)
 
@@ -85,6 +82,7 @@ if image_file and mask_file:
 
     preds = []
 
+    # Run Models, Compute Hard Dice
     for name, model in models:
         with torch.no_grad():
             logits = model(x)
@@ -92,16 +90,9 @@ if image_file and mask_file:
 
         dice = dice_score(pred, y)
         _, betti_stats = betti_error_one_image(logits[0], y[0])
+        preds.append((name, pred[0, 0].cpu().numpy(), dice.item(), betti_stats))
 
-        preds.append(
-            (
-                name,
-                pred[0, 0].cpu().numpy(),
-                dice.item(),
-                betti_stats,
-            )
-        )
-
+    # Display the predictions and dice scores in a grid.
     for row_start in range(0, len(preds), 3):
         cols = st.columns(3, gap="medium")
 
