@@ -17,6 +17,7 @@ dependencies = [
     "safetensors>=0.7.0",
     "scikit-image>=0.26.0",
     "scipy>=1.17.1",
+    "streamlit>=1.40.0",
     "topolosses>=0.2.0",
     "torch==2.4.1+cu121",
     "torchaudio==2.4.1+cu121",
