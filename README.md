@@ -1,3 +1,7 @@
+
+
+
+
 ## Evaluating Topology-Aware Losses for Retinal Vessel Segmentation
 Code for Computer Vision (Spring 2026) Final Project at UMass Lowell
 
@@ -26,6 +30,8 @@ You will find 4 different evals:
 
 ## Demo
 We have a streamlit demo at `demo/` folder. There's also two images from the FIVES dataset to try out under the `demos/` folder . Unfortunately the demo only works well with images that are have dimensions of a multiple of 16.
+
+https://github.com/user-attachments/assets/47fd6e66-6526-4f4b-9ceb-6183e4a96ba1
 
 **Steps:**
 1. Install the uv package manager through this command: `curl -LsSf https://astral.sh/uv/install.sh | sh`
